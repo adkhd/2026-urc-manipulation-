@@ -1,0 +1,9 @@
+# Default initial positions for arm_v3's ros2_control fake system
+
+initial_positions:
+  Joint1: 0.1
+  Joint2: 1.5
+  Joint3: -2.0
+  Joint4: 0
+  Joint5: 0
+  Joint7: 0

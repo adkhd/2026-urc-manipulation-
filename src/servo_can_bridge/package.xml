@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>servo_can_bridge</name>
+  <version>0.1.0</version>
+  <description>Multi-axis Servo  CANopen bridge</description>
+
+  <maintainer email="you@example.com">you</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+
+  <!-- C++ 노드 안 쓰면 rclcpp 불필요 -->
+  <exec_depend>python3</exec_depend>
+    <export>
+    <!-- 이 줄이 없으면 빌드툴 추론이 꼬일 수 있어요 -->
+    <build_type>ament_python</build_type>
+  </export>
+  <!-- pip 설치가 보통이지만, 문서 메모 용도로 -->
+  <!-- pip: python-canopen, python-can -->
+</package>

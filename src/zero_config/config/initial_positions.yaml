@@ -1,0 +1,9 @@
+# Default initial positions for zero_arm_urdf's ros2_control fake system
+
+initial_positions:
+  finger_joint1: 0.0
+  joint1: 0.
+  joint2: 1.3301
+  joint3: -1.56
+  joint4: 0.0
+  joint5: -3.141592

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>zero_servo_control</name>
+  <version>0.0.0</version>
+  <description>Joystick → MoveIt Servo input bridge (component) + keyboard teleop</description>
+  <maintainer email="kim@todo.todo">kim</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- JoyToServoPub 컴포넌트가 필요로 하는 런타임/빌드 의존성 -->
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>moveit_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>std_msgs</depend>
+  <depend>can_msgs</depend>
+  <!-- (선택) moveit_servo 를 함께 사용한다면 -->
+  <depend>moveit_servo</depend>
+
+  <!-- 조이스틱 드라이버를 같이 쓰면 런치에서 편함 -->
+  <exec_depend>joy</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

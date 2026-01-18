@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>zero_arm_urdf</name>
+  <version>0.0.1</version>
+  <description>URDF package for Zero Arm</description>
+  <maintainer email="shg2281@seoultech.ac.kr">goat</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>urdf</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

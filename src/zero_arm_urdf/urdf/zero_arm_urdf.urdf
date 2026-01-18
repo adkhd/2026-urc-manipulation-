@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="zero_arm_urdf">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0.0658257284419014 -0.000207866022929881 0.0479622408614532"
+        rpy="0 0 0" />
+      <mass
+        value="0.971772873740423" />
+      <inertia
+        ixx="0.006084943050822"
+        ixy="1.41809852052385E-06"
+        ixz="-1.31018488364514E-05"
+        iyy="0.00378269979771676"
+        iyz="1.2979509131575E-05"
+        izz="0.00748069186848877" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="link1">
+    <inertial>
+      <origin
+        xyz="-0.00397025673957066 -0.0425742314422386 1.37090863266964E-06"
+        rpy="0 0 0" />
+      <mass
+        value="0.234821575011378" />
+      <inertia
+        ixx="0.000247746565184449"
+        ixy="2.82744814330891E-06"
+        ixz="2.61132776099762E-09"
+        iyy="0.000244853538800398"
+        iyz="-1.3131238195509E-08"
+        izz="0.000184528194453294" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint1"
+    type="revolute">
+    <origin
+      xyz="0.16 0 0"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link1" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="-3.0"
+      upper="3.0"
+      effort="200"
+      velocity="1" />
+  </joint>
+  <link
+    name="link2">
+    <inertial>
+      <origin
+        xyz="0.220334053460024 0.000872969026101303 -2.77555756156289E-17"
+        rpy="0 0 0" />
+      <mass
+        value="0.261954653215328" />
+      <inertia
+        ixx="0.000188707236359268"
+        ixy="-0.000200063248022766"
+        ixz="2.26000765066799E-19"
+        iyy="0.00464878606453287"
+        iyz="-1.58314299122513E-20"
+        izz="0.00481819737388019" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint2"
+    type="revolute">
+    <origin
+      xyz="-0.006 -0.1055 0"
+      rpy="3.1416 0 0" />
+    <parent
+      link="link1" />
+    <child
+      link="link2" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.1"
+      upper="1.43"
+      effort="200"
+      velocity="1" />
+  </joint>
+  <link
+    name="link3">
+    <inertial>
+      <origin
+        xyz="0.30483853766749 -0.00144503350835333 -0.0164831721923893"
+        rpy="0 0 0" />
+      <mass
+        value="0.488417816473279" />
+      <inertia
+        ixx="0.000321059705121818"
+        ixy="-4.27633039477105E-06"
+        ixz="4.86912251323769E-08"
+        iyy="0.00673693203480663"
+        iyz="-2.01359163353348E-08"
+        izz="0.00693397263925434" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint3"
+    type="revolute">
+    <origin
+      xyz="0.438 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link2" />
+    <child
+      link="link3" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.66"
+      upper="-0.5"
+      effort="200"
+      velocity="1" />
+  </joint>
+  <link
+    name="link4">
+    <inertial>
+      <origin
+        xyz="0.00495433196508244 -6.20216963115386E-05 5.77115050062471E-05"
+        rpy="0 0 0" />
+      <mass
+        value="0.445256597701024" />
+      <inertia
+        ixx="0.000127440338159421"
+        ixy="2.55511769101157E-08"
+        ixz="2.9920672788021E-08"
+        iyy="0.000125423181252453"
+        iyz="2.83533341223222E-08"
+        izz="7.59794261694308E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint4"
+    type="revolute">
+    <origin
+      xyz="0.525 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link3" />
+    <child
+      link="link4" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2"
+      upper="2"
+      effort="200"
+      velocity="1" />
+  </joint>
+  <link
+    name="link5">
+    <inertial>
+      <origin
+        xyz="0.000245573438265645 0.010340330297018 0.0690052158718446"
+        rpy="0 0 0" />
+      <mass
+        value="0.352114397652173" />
+      <inertia
+        ixx="0.000264513851496235"
+        ixy="2.31737364753378E-07"
+        ixz="-1.05215700699188E-06"
+        iyy="0.000508317617337495"
+        iyz="8.7496383808142E-06"
+        izz="0.000490997704862073" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link5.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/link5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint5"
+    type="revolute">
+    <origin
+      xyz="0.0361 0 0"
+      rpy="0 1.5708 0" />
+    <parent
+      link="link4" />
+    <child
+      link="link5" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-500.0"
+      upper="500.0"
+      effort="200"
+      velocity="1" />
+  </joint>
+  <link
+    name="right_finger">
+    <inertial>
+      <origin
+        xyz="0.0215937628980724 0.000202849593494848 -0.0624186677218008"
+        rpy="0 0 0" />
+      <mass
+        value="0.053241038188701" />
+      <inertia
+        ixx="3.33488752067218E-05"
+        ixy="-1.8444368483651E-11"
+        ixz="3.45813423510804E-06"
+        iyy="3.16050413019731E-05"
+        iyz="1.1407438006372E-08"
+        izz="1.32352703654019E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/right_finger.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/right_finger.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="finger_joint1"
+    type="prismatic">
+    <origin
+      xyz="0.002 0.00025625 0.20564"
+      rpy="0 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="right_finger" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="0"
+      upper="0.0564"
+      effort="100"
+      velocity="3" />
+  </joint>
+  <link
+    name="solenoid">
+    <inertial>
+      <origin
+        xyz="2.4980018054066E-16 -2.77555756156289E-17 -0.0223514106905571"
+        rpy="0 0 0" />
+      <mass
+        value="0.0112479645943005" />
+      <inertia
+        ixx="1.29768403052871E-06"
+        ixy="1.03278892433719E-23"
+        ixz="-4.16899028726726E-22"
+        iyy="1.22700403052871E-06"
+        iyz="5.4388397497731E-22"
+        izz="6.734959291886E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/solenoid.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/solenoid.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="solenoid_joint"
+    type="fixed">
+    <origin
+      xyz="0.026236 0 0.0039392"
+      rpy="0 0.17453 3.1416" />
+    <parent
+      link="right_finger" />
+    <child
+      link="solenoid" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="left_finger">
+    <inertial>
+      <origin
+        xyz="0.0220125847239852 0.000188722118320002 -0.0621351163379389"
+        rpy="0 0 0" />
+      <mass
+        value="0.0557852527831897" />
+      <inertia
+        ixx="3.18177178076056E-05"
+        ixy="8.17133668202917E-21"
+        ixz="3.57080613975233E-06"
+        iyy="3.02026365485314E-05"
+        iyz="2.09710323370774E-08"
+        izz="1.33690917758008E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/left_finger.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://zero_arm_urdf/meshes/left_finger.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="finger_joint2"
+    type="prismatic">
+    <origin
+      xyz="-0.002 0.00025625 0.20564"
+      rpy="0 0 -3.1416" />
+    <parent
+      link="link5" />
+    <child
+      link="left_finger" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+    <mimic
+      joint="finger_joint1"
+      multiplier="1"
+      offset="0" />
+  </joint>
+</robot>
