@@ -1,0 +1,20 @@
+planning_plugin: ompl_interface/OMPLPlanner
+request_adapters: >-
+  default_planner_request_adapters/AddTimeOptimalParameterization
+  default_planner_request_adapters/ResolveConstraintFrames
+  default_planner_request_adapters/FixWorkspaceBounds
+  default_planner_request_adapters/FixStartStateBounds  
+  default_planner_request_adapters/FixStartStateCollision
+  default_planner_request_adapters/FixStartStatePathConstraints
+
+planner_configs:
+  RRTConnect:
+    type: geometric::RRTConnect
+    range: 0.0  # 기본값
+
+# [중요] 사용 중인 planning group 이름 (예: arm) 아래에 추가
+arm:
+  planner_configs:
+    - RRTConnect
+  # 시작 상태가 조인트 한계를 0.1 라디안(약 5.7도)까지 벗어나도 허용
+  start_state_max_bounds_error: 0.1

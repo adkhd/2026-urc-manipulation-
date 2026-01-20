@@ -257,7 +257,7 @@ private:
 
       return true; // Twist 모드
   }
-
+  int last_sent_gripper_val_ = -1; // 초기값 -1
   // --- 그리퍼/시리얼 관련 함수 (기존 코드 유지) ---
   void processGripperJoy(const sensor_msgs::msg::Joy::ConstSharedPtr& msg) {
       if (serial_fd_ < 0) return;
@@ -269,8 +269,14 @@ private:
       if (gripper_norm_ < 0.0) gripper_norm_ = 0.0;
       if (gripper_norm_ > 1.0) gripper_norm_ = 1.0;
       
-      sendGripperPosition(gripper_norm_);
-      
+      int current_val = static_cast<int>(gripper_norm_ * 1000.0 + 0.5);
+    
+    // 너무 자주 보내지 않게 + 값이 바뀌었을 때만 전송
+     if (current_val != last_sent_gripper_val_) {
+        sendGripperPosition(gripper_norm_);
+        last_sent_gripper_val_ = current_val;
+        RCLCPP_INFO(this->get_logger(), "Sent G: %d", current_val); 
+    }
       bool solenoid_btn = (msg->buttons[RIGHT_BUMPER] != 0);
       if (solenoid_btn && !last_solenoid_button_) sendSolenoid();
       last_solenoid_button_ = solenoid_btn;
@@ -292,7 +298,11 @@ private:
 
   void initSerial(const std::string& port_name) {
       serial_fd_ = open(port_name.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
-      if (serial_fd_ < 0) return; // 실패해도 노드는 죽지 않음
+      if (serial_fd_ < 0) {
+        // [추가] 연결 실패 시 에러 로그 띄우기
+        RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", port_name.c_str());
+        return; 
+    }
       termios tty{};
       if (tcgetattr(serial_fd_, &tty) != 0) { close(serial_fd_); serial_fd_ = -1; return; }
       cfsetospeed(&tty, B115200); cfsetispeed(&tty, B115200);

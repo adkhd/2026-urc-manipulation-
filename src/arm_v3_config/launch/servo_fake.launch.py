@@ -84,6 +84,7 @@ def generate_launch_description():
     servo_node = Node(
         package="moveit_servo",
         executable="servo_node_main",
+        name="servo_node", 
         parameters=[
             servo_params,
             moveit_config.robot_description,

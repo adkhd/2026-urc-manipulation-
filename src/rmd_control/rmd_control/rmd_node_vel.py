@@ -205,6 +205,7 @@ class RMDControlNode(Node):
         # 2. Low Pass Filter 적용
         filtered_vels = self.lpf.filter(target_vels)
         if not self.check_Joint_limits(target_pos):
+            self.stop_all_motor()
             self.get_logger().warn(f"target pos 벗어남")
             return
         
@@ -387,9 +388,9 @@ class RMDControlNode(Node):
         # J1 : >= 0, J2 : -20 ~ 200, J3 : -137 ~ -22, J4: -150 ~ 150, J5: limit less 
         #실제 조인트 리밋을 확인해보고, 하는 것이 좋아보임.
         limits_rad = [
-            [-0.0005, 0.255], # J1 m단위
-            [-0.3, 3.141],   # J2 (약 -28 ~ 180도) 계산해보기
-            [-2.6564, -0.615],    # J3 (-137 ~ 22도)(수정 필요) 계산해보기
+            [-0.005, 0.255], # J1 m단위
+            [-0.3, 3.241],   # J2 (약 -28 ~ 180도) 계산해보기
+            [-2.4564, -0.815],    # J3 (-137 ~ 22도)(수정 필요) 계산해보기
             [-2.25, 2.25],   # J4 -130~ 130
             [-100, 100]  # J5
         ]

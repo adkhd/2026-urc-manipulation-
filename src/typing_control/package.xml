@@ -3,14 +3,17 @@
 <package format="3">
   <name>typing_control</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>MoveIt2 Python Planning Package</description>
   <maintainer email="kim@todo.todo">kim</maintainer>
   <license>TODO: License declaration</license>
 
   <depend>rclpy</depend>
-  <depend>moveit_ros_planning_interface</depend>
   <depend>geometry_msgs</depend>
-
+  
+  <depend>moveit_py</depend>
+  <depend>moveit_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

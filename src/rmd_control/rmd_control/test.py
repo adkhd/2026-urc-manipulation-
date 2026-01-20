@@ -61,10 +61,7 @@ if __name__ == "__main__":
         #     motor.read_acceleration(0x00)
         
         #motor1.pos_control(0,100)
-        motor2.debug = 0
-        
-        motor1.vel_control(180)
-        time.sleep(16)
+
         for motor in [motor1, motor2, motor3, motor4, motor5]: 
              motor.read_multi_turn_angle()
     except KeyboardInterrupt:
@@ -72,5 +69,5 @@ if __name__ == "__main__":
     finally:
         for motor in [motor1, motor2, motor3, motor4, motor5]: 
             print(motor.state['multi_angle'])
-            motor.stop_motor()
+            motor.shutdown_motor()
 
