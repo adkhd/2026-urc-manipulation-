@@ -10,7 +10,7 @@ request_adapters: >-
 planner_configs:
   RRTConnect:
     type: geometric::RRTConnect
-    range: 0.0  # 기본값
+    range: 0.05  # 기본값
 
 # [중요] 사용 중인 planning group 이름 (예: arm) 아래에 추가
 arm:

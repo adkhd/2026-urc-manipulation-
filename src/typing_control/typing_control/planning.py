@@ -1,44 +1,42 @@
 #!/usr/bin/env python3
 """
-MoveIt Planning-Only Node (No Execution, No ros2_control needed)
+MoveIt Planning-Only Node (Complete Version)
 """
 import rclpy
+import time
 from rclpy.node import Node
 from rclpy.duration import Duration
 from moveit.planning import MoveItPy, PlanRequestParameters
 from geometry_msgs.msg import Point, PointStamped, PoseStamped
 from sensor_msgs.msg import JointState
-from moveit_msgs.msg import DisplayTrajectory
+from moveit_msgs.msg import DisplayTrajectory, RobotTrajectory
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from std_msgs.msg import Header
+from builtin_interfaces.msg import Duration as ROSDuration
 from tf2_ros import Buffer, TransformListener
 from tf2_geometry_msgs import do_transform_point
-
 
 class SimplePlanner(Node):
     def __init__(self):
         super().__init__('simple_planner')
         
-        # MoveIt 초기화
+        # 1. MoveIt 초기화
         self.moveit = MoveItPy(node_name="moveit_py_planner")
         self.arm = self.moveit.get_planning_component("arm")
         
-        # TF
+        # 2. TF 초기화
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
-        # 조인트 상태
+        # 3. 데이터 구독
         self.joint_state = None
-        self.create_subscription(JointState, '/joint_states', 
-                                self.joint_state_cb, 10)
+        self.create_subscription(JointState, '/joint_states', self.joint_state_cb, 10)
+        self.create_subscription(Point, 'target_input_point', self.plan_cb, 10)
         
-        # 목표 입력
-        self.create_subscription(Point, 'target_input_point', 
-                                self.plan_cb, 10)
+        # 4. 시각화 퍼블리셔
+        self.viz_pub = self.create_publisher(DisplayTrajectory, '/display_planned_path', 10)
         
-        # 시각화
-        self.viz_pub = self.create_publisher(DisplayTrajectory, 
-                                            '/display_planned_path', 10)
-        
-        self.get_logger().info("SimplePlanner ready")
+        self.get_logger().info("SimplePlanner Ready (Complete Version)")
 
     def joint_state_cb(self, msg):
         self.joint_state = msg
@@ -46,243 +44,189 @@ class SimplePlanner(Node):
     def plan_cb(self, msg: Point):
         log = self.get_logger()
         log.info("="*60)
-        log.info(f"Target: ({msg.x:.3f}, {msg.y:.3f}, {msg.z:.3f})")
+        log.info(f"Target Input: ({msg.x:.3f}, {msg.y:.3f}, {msg.z:.3f})")
         
-        # 조인트 상태 체크
         if self.joint_state is None:
-            log.error("No joint_states")
+            log.error("Wait for joint_states...")
             return
         
-        # 목표 계산
+        # 1. 목표 계산
         goal = self.compute_goal(msg)
-        if goal is None:
-            return
+        if goal is None: return
         
-        # Planning
+        # 2. 플래닝 실행
         trajectory = self.plan(goal)
         
+        # 3. 결과 처리
         if trajectory:
-            log.info("✓ SUCCESS")
-            self.print_trajectory(trajectory)
-            self.visualize(trajectory)  # 시각화 다시 활성화
+            log.info("✓ PLANNING SUCCESS")
+            self.print_trajectory_info(trajectory)
+            self.visualize(trajectory)
         else:
-            log.error("✗ FAILED")
+            log.error("✗ PLANNING FAILED")
         
         log.info("="*60)
 
-    def compute_goal(self, point: Point) -> PoseStamped:
-        """link8 좌표 → link5 목표"""
+    def compute_goal(self, point_in_link8: Point) -> PoseStamped:
+        """link8 좌표 → link0 변환 및 목표 자세 설정"""
         try:
-            log = self.get_logger()
-            
-            # 현재 link8과 link5의 위치 먼저 확인
-            try:
-                tf_link8_in_base = self.tf_buffer.lookup_transform(
-                    "link0", "link8", rclpy.time.Time(),
-                    timeout=Duration(seconds=1.0))
-                
-                tf_link5_in_base = self.tf_buffer.lookup_transform(
-                    "link0", "link5", rclpy.time.Time(),
-                    timeout=Duration(seconds=1.0))
-                
-                log.info("Current positions in base frame:")
-                log.info(f"  link8: ({tf_link8_in_base.transform.translation.x:.3f}, "
-                        f"{tf_link8_in_base.transform.translation.y:.3f}, "
-                        f"{tf_link8_in_base.transform.translation.z:.3f})")
-                log.info(f"  link5: ({tf_link5_in_base.transform.translation.x:.3f}, "
-                        f"{tf_link5_in_base.transform.translation.y:.3f}, "
-                        f"{tf_link5_in_base.transform.translation.z:.3f})")
-            except:
-                pass
-            
-            # link8 → base
+            # 변환할 포인트 설정
             ps = PointStamped()
             ps.header.frame_id = "link8"
             ps.header.stamp = self.get_clock().now().to_msg()
-            ps.point = point
+            ps.point = point_in_link8
             
-            tf1 = self.tf_buffer.lookup_transform(
-                "link0", "link8", rclpy.time.Time(),
-                timeout=Duration(seconds=1.0))
+            # TF 조회 (link0 <-> link8)
+            transform = self.tf_buffer.lookup_transform(
+                "link0", "link8", rclpy.time.Time(), timeout=Duration(seconds=1.0))
             
-            target_base = do_transform_point(ps, tf1)
+            # 좌표 변환 실행
+            target_in_base = do_transform_point(ps, transform)
             
-            log.info(f"Target in base: ({target_base.point.x:.3f}, "
-                    f"{target_base.point.y:.3f}, "
-                    f"{target_base.point.z:.3f})")
-            
-            # link8 → link5 오프셋
-            tf2 = self.tf_buffer.lookup_transform(
-                "link8", "link5", rclpy.time.Time(),
-                timeout=Duration(seconds=1.0))
-            
-            offset = tf2.transform.translation
-            log.info(f"link8→link5 offset: ({offset.x:.3f}, {offset.y:.3f}, {offset.z:.3f})")
-            
-            # link5 목표 (방법 1: 오프셋 빼기)
+            # 최종 목표 Pose 생성
             goal = PoseStamped()
             goal.header.frame_id = "link0"
             goal.header.stamp = self.get_clock().now().to_msg()
-            goal.pose.position.x = target_base.point.x - offset.x
-            goal.pose.position.y = target_base.point.y - offset.y
-            goal.pose.position.z = target_base.point.z - offset.z
-            goal.pose.orientation.w = 1.0
+            goal.pose.position = target_in_base.point
             
-            log.info(f"Goal for link5: ({goal.pose.position.x:.3f}, "
-                    f"{goal.pose.position.y:.3f}, "
-                    f"{goal.pose.position.z:.3f})")
+            # 목표 자세: RPY(-90, 90, 0)에 해당하는 쿼터니언
+            goal.pose.orientation.x = -0.5
+            goal.pose.orientation.y = 0.5
+            goal.pose.orientation.z = -0.5
+            goal.pose.orientation.w = 0.5
             
-            # 거리 체크
-            distance = (goal.pose.position.x**2 + 
-                       goal.pose.position.y**2 + 
-                       goal.pose.position.z**2)**0.5
-            log.info(f"Goal distance from base: {distance:.3f}m")
-            
-            if distance > 1.0:  # 1m 넘으면 경고
-                log.warn(f"Goal seems too far! ({distance:.3f}m)")
-            
+            self.get_logger().info(f"Goal Pose (link0): {goal.pose.position.x:.3f}, {goal.pose.position.y:.3f}, {goal.pose.position.z:.3f}")
             return goal
             
         except Exception as e:
-            self.get_logger().error(f"Goal computation failed: {e}")
-            import traceback
-            traceback.print_exc()
+            self.get_logger().error(f"Compute Goal Error: {e}")
             return None
-
     def plan(self, goal: PoseStamped):
-        """Planning 실행"""
+        """Planning 수행"""
         try:
-            # 시작 = 현재
             self.arm.set_start_state_to_current_state()
             
+            # [삭제] 아래 두 줄은 moveit_py에서 지원하지 않으므로 삭제합니다.
+            # self.arm.set_goal_position_tolerance(0.001)
+            # self.arm.set_goal_orientation_tolerance(0.01)
+            
             # 목표 설정
-            self.arm.set_goal_state(
-                pose_stamped_msg=goal,
-                pose_link="link5"
-            )
+            self.arm.set_goal_state(pose_stamped_msg=goal, pose_link="link7")
             
-            # ★ 제약조건 설정 안 함 (기본값 = 제약 없음)
-            
-            # 파라미터
+            # 플래너 파라미터
             params = PlanRequestParameters(self.moveit)
             params.planning_pipeline = "ompl"
+            params.planner_id = "RRTConnect"
             params.planning_time = 5.0
-            params.max_velocity_scaling_factor = 0.3
-            params.max_acceleration_scaling_factor = 0.3
+            params.max_velocity_scaling_factor = 0.5
+            params.max_acceleration_scaling_factor = 0.5
             
-            self.get_logger().info("Planning...")
-            
-            # Plan
+            # 플래닝
+            self.get_logger().info("Planning started...")
             result = self.arm.plan(parameters=params)
             
             if result and result.trajectory:
-                self.get_logger().info("  ✓ Trajectory found")
                 return result.trajectory
-            else:
-                return None
+            return None
                 
         except Exception as e:
-            self.get_logger().error(f"Planning error: {e}")
+            self.get_logger().error(f"Planning Logic Error: {e}")
             import traceback
             traceback.print_exc()
             return None
-
     def visualize(self, trajectory):
-        """RViz 시각화"""
-        try:
-            from moveit_msgs.msg import RobotState
-            
-            msg = DisplayTrajectory()
-            
-            # trajectory_start 설정 (현재 로봇 상태)
-            msg.trajectory_start.joint_state = self.joint_state
-            
-            # RobotTrajectory를 메시지로 변환
-            if hasattr(trajectory, 'getMessage'):
-                traj_msg = trajectory.getMessage()
-                msg.trajectory.append(traj_msg)
-            else:
-                # 이미 메시지 형식인 경우
-                msg.trajectory.append(trajectory)
-            
-            # model_id 설정
-            msg.model_id = "arm_v3"
-            
-            self.viz_pub.publish(msg)
-            self.get_logger().info("→ Published to /display_planned_path")
-            
-        except Exception as e:
-            self.get_logger().warn(f"Visualization failed: {e}")
-            import traceback
-            traceback.print_exc()
-
-    def print_trajectory(self, trajectory):
-        """Trajectory 정보 출력"""
+        """
+        [핵심] 궤적 데이터를 RViz로 안전하게 전송
+        C++ 객체와 Python 객체 간의 충돌을 방지하기 위해 데이터를 '깊은 복사'합니다.
+        """
         try:
             log = self.get_logger()
+            msg = DisplayTrajectory()
+            msg.model_id = "arm_v3"
             
-            # 여러 방법 시도
-            try:
-                # 방법 1: getMessage()
-                if hasattr(trajectory, 'getMessage'):
-                    traj_msg = trajectory.getMessage()
-                    points = traj_msg.joint_trajectory.points
-                    
-                    log.info(f"  Waypoints: {len(points)}")
-                    
-                    if len(points) > 0:
-                        duration = points[-1].time_from_start.sec + \
-                                  points[-1].time_from_start.nanosec * 1e-9
-                        log.info(f"  Duration: {duration:.2f}s")
-                        
-                        start = points[0].positions
-                        end = points[-1].positions
-                        
-                        log.info(f"  Start joints: {[f'{p:.3f}' for p in start]}")
-                        log.info(f"  End joints:   {[f'{p:.3f}' for p in end]}")
-                    return
-            except:
-                pass
+            # 시작 상태 설정
+            if self.joint_state:
+                msg.trajectory_start.joint_state = self.joint_state
             
-            try:
-                # 방법 2: getWayPointCount()
-                if hasattr(trajectory, 'getWayPointCount'):
-                    count = trajectory.getWayPointCount()
-                    duration = trajectory.getWayPointDurationFromStart(count - 1)
-                    log.info(f"  Waypoints: {count}")
-                    log.info(f"  Duration: {duration:.2f}s")
-                    return
-            except:
-                pass
+            # 궤적 데이터 추출 (버전에 따라 getMessage() 유무가 다름)
+            if hasattr(trajectory, 'getMessage'):
+                raw_traj = trajectory.getMessage()
+            else:
+                # getMessage가 없으면 속성으로 접근 시도
+                raw_traj = trajectory
+
+            # RobotTrajectory 빈 객체 생성
+            clean_traj = RobotTrajectory()
             
-            # 방법 3: 기본 정보만
-            log.info("  Trajectory generated successfully")
-            log.info("  (Detailed info not accessible via Python API)")
+            # JointTrajectory 데이터가 있는지 확인
+            if hasattr(raw_traj, 'joint_trajectory'):
+                src_traj = raw_traj.joint_trajectory
+                new_traj = JointTrajectory()
                 
+                # 헤더 복사
+                new_traj.header = Header()
+                new_traj.header.frame_id = src_traj.header.frame_id if src_traj.header.frame_id else "link0"
+                new_traj.header.stamp = self.get_clock().now().to_msg()
+                new_traj.joint_names = src_traj.joint_names
+                
+                # 포인트 데이터 한땀한땀 복사 (이 부분이 충돌 방지의 핵심)
+                for pt in src_traj.points:
+                    new_pt = JointTrajectoryPoint()
+                    new_pt.positions = list(pt.positions)
+                    new_pt.velocities = list(pt.velocities)
+                    new_pt.accelerations = list(pt.accelerations)
+                    new_pt.effort = list(pt.effort)
+                    
+                    # 시간 정보 복사
+                    dur = ROSDuration()
+                    dur.sec = int(pt.time_from_start.sec)
+                    dur.nanosec = int(pt.time_from_start.nanosec)
+                    new_pt.time_from_start = dur
+                    
+                    new_traj.points.append(new_pt)
+                
+                clean_traj.joint_trajectory = new_traj
+                msg.trajectory.append(clean_traj)
+                
+                self.viz_pub.publish(msg)
+                log.info("→ Visuzliation Published (Deep Copy Complete)")
+            else:
+                log.warn("Trajectory format not recognized for visualization.")
+
         except Exception as e:
-            self.get_logger().warn(f"Failed to print trajectory: {e}")
+            self.get_logger().error(f"Visualization Error: {e}")
             import traceback
             traceback.print_exc()
 
+    def print_trajectory_info(self, trajectory):
+        """궤적 정보 로그 출력"""
+        try:
+            # 데이터 추출
+            if hasattr(trajectory, 'getMessage'):
+                traj_msg = trajectory.getMessage()
+            else:
+                traj_msg = trajectory
+
+            if hasattr(traj_msg, 'joint_trajectory'):
+                points = traj_msg.joint_trajectory.points
+                cnt = len(points)
+                if cnt > 0:
+                    last_pt = points[-1]
+                    duration = last_pt.time_from_start.sec + last_pt.time_from_start.nanosec * 1e-9
+                    self.get_logger().info(f"  - Waypoints: {cnt}")
+                    self.get_logger().info(f"  - Duration: {duration:.2f}s")
+        except:
+            pass # 로그 출력 실패는 무시
 
 def main(args=None):
     rclpy.init(args=args)
     node = SimplePlanner()
-    
-    print("\n" + "="*60)
-    print("Simple MoveIt Planner")
-    print("  Planning: YES")
-    print("  Execution: NO")
-    print("  Constraints: NO")
-    print("="*60 + "\n")
-    
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
         rclpy.shutdown()
-
 
 if __name__ == "__main__":
     main()

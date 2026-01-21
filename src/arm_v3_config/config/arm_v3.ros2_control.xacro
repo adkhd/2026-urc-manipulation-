@@ -43,13 +43,6 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="Joint7">
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['Joint7']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
 
         </ros2_control>
     </xacro:macro>

@@ -376,7 +376,7 @@
   </link>
   <joint
     name="Joint6"
-    type="prismatic">
+    type="fixed">
     <origin
       xyz="0.0045 0 0.2282"
       rpy="0 0 0" />
@@ -384,17 +384,6 @@
       link="link5" />
     <child
       link="link6" />
-    <axis
-      xyz="1 0 0" />
-    <limit
-      lower="0"
-      upper="0.054"
-      effort="30"
-      velocity="4" />
-    <mimic
-      joint="Joint7"
-      multiplier="1"
-      offset="0" />
   </joint>
   <link
     name="link7">
@@ -438,7 +427,7 @@
   </link>
   <joint
     name="Joint7"
-    type="prismatic">
+    type="fixed">
     <origin
       xyz="-0.0035 0 0.2282"
       rpy="0 0 -3.1416" />
@@ -446,13 +435,6 @@
       link="link5" />
     <child
       link="link7" />
-    <axis
-      xyz="1 0 0" />
-    <limit
-      lower="0"
-      upper="0.054"
-      effort="30"
-      velocity="1" />
   </joint>
   <link
     name="link8">
