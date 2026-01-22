@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Complete MoveIt Planning Node
+Complete MoveIt Planning Node with Execute Topic
 """
 import rclpy
 from rclpy.node import Node
@@ -40,10 +40,12 @@ class CompletePlanner(Node):
         # 퍼블리셔
         self.viz_pub = self.create_publisher(DisplayTrajectory, 
                                             '/display_planned_path', 10)
-        self.traj_pub = self.create_publisher(JointTrajectory,
-                                              '/planned_trajectory', 10)
         
-        self.get_logger().info("✅ Complete Planner Ready")
+        # [추가] Execute 노드로 전송할 Trajectory Publisher
+        self.exec_pub = self.create_publisher(JointTrajectory,
+                                              '/trajectory_for_execute', 10)
+        
+        self.get_logger().info("✅ Complete Planner Ready (Execute Mode)")
 
     def joint_state_cb(self, msg):
         self.joint_state = msg
@@ -65,7 +67,7 @@ class CompletePlanner(Node):
         if trajectory:
             log.info("✅ PLANNING SUCCESS")
             self.print_trajectory_info(trajectory)
-            self.publish_trajectory_data(trajectory)
+            self.publish_for_execute(trajectory)  # Execute 노드로 전송
             self.visualize(trajectory)
         else:
             log.error("❌ PLANNING FAILED")
@@ -137,7 +139,6 @@ class CompletePlanner(Node):
         try:
             log = self.get_logger()
             
-            # ✅ get_robot_trajectory_msg() 사용
             if not hasattr(trajectory, 'get_robot_trajectory_msg'):
                 log.warn("⚠️  No get_robot_trajectory_msg() method")
                 return
@@ -164,12 +165,11 @@ class CompletePlanner(Node):
         except Exception as e:
             log.warn(f"Print info error: {e}")
 
-    def publish_trajectory_data(self, trajectory):
-        """궤적 데이터 전송"""
+    def publish_for_execute(self, trajectory):
+        """Execute 노드로 Trajectory 전송"""
         try:
             log = self.get_logger()
             
-            # ✅ get_robot_trajectory_msg() 사용
             if not hasattr(trajectory, 'get_robot_trajectory_msg'):
                 log.error("❌ Cannot extract trajectory data")
                 return
@@ -184,20 +184,20 @@ class CompletePlanner(Node):
             jt = traj_msg.joint_trajectory
             jt.header.stamp = self.get_clock().now().to_msg()
             
-            # Publish
-            #self.traj_pub.publish(jt)
-            log.info(f"📤 Trajectory published to /planned_trajectory")
+            # Publish to Execute Node
+            self.exec_pub.publish(jt)
+            log.info(f"📤 Trajectory sent to Execute Node (/trajectory_for_execute)")
+            log.info(f"   - Waypoints: {len(jt.points)}")
+            log.info(f"   - Duration: {jt.points[-1].time_from_start.sec + jt.points[-1].time_from_start.nanosec*1e-9:.2f}s")
             
         except Exception as e:
-            log.error(f"Publish trajectory error: {e}")
+            log.error(f"Publish for execute error: {e}")
 
     def visualize(self, trajectory):
         """RViz 시각화"""
         try:
             log = self.get_logger()
-            log.info("🎨 Visualizing...")
             
-            # ✅ get_robot_trajectory_msg() 사용
             if not hasattr(trajectory, 'get_robot_trajectory_msg'):
                 log.error("❌ No get_robot_trajectory_msg() method")
                 return
@@ -246,18 +246,13 @@ class CompletePlanner(Node):
             msg.trajectory.append(clean_traj)
             
             # Publish
-            #self.viz_pub.publish(msg)
+            self.viz_pub.publish(msg)
             
             num_subscribers = self.viz_pub.get_subscription_count()
-            log.info(f"✅ Visualization published (subscribers: {num_subscribers})")
-            
-            if num_subscribers == 0:
-                log.warn("⚠️  No RViz subscribers")
+            log.info(f"🎨 Visualization published (subscribers: {num_subscribers})")
             
         except Exception as e:
             log.error(f"❌ Visualization error: {e}")
-            import traceback
-            traceback.print_exc()
 
 
 def main(args=None):
@@ -265,10 +260,10 @@ def main(args=None):
     node = CompletePlanner()
     
     print("\n" + "="*60)
-    print("🚀 Complete MoveIt Planner")
+    print("🚀 Complete MoveIt Planner (Execute Mode)")
     print("  - Planning with 5 retry attempts")
+    print("  - Execute topic: /trajectory_for_execute")
     print("  - Visualization: /display_planned_path")
-    print("  - Trajectory data: /planned_trajectory")
     print("="*60 + "\n")
     
     try:

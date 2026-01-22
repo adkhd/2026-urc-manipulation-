@@ -75,13 +75,14 @@ public:
       frame_to_publish_(BASE_FRAME_ID),
       speed_level_index_(4),  // 기본 100% (Index 4)
       e_stop_active_(false),
+      servo_running_(true),   // [추가] Servo 상태 (초기값: 실행 중)
       last_menu_button_(false),
       last_speed_button_(false),
       last_home_button_(false),
-      last_solenoid_button_(false),
-      gripper_mode_(false),
+      last_servo_toggle_button_(false),  // [추가] Servo 토글 버튼 상태
       gripper_norm_(0.5),
-      serial_fd_(-1)
+      serial_fd_(-1),
+      last_sent_gripper_val_(-1)
   {
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         JOY_TOPIC, rclcpp::SystemDefaultsQoS(),
@@ -94,6 +95,12 @@ public:
     
     joint_pub_ = this->create_publisher<control_msgs::msg::JointJog>(
         JOINT_TOPIC, rclcpp::SystemDefaultsQoS());
+    
+    // [추가] Servo Start/Stop 서비스 클라이언트
+    servo_start_client_ = this->create_client<std_srvs::srv::Trigger>(
+        "/servo_node/start_servo");
+    servo_stop_client_ = this->create_client<std_srvs::srv::Trigger>(
+        "/servo_node/stop_servo");
     
     // 그리퍼 시리얼 초기화 (포트가 없어도 노드가 죽지 않도록 예외처리 필요)
     initSerial("/dev/arduino_mega");
@@ -138,20 +145,30 @@ private:
         return; 
     }
 
-    // 2. 그리퍼 모드 토글 (HOME 버튼)
+    // 2. [추가] Servo Start/Stop 토글 (RIGHT_STICK_CLICK)
+    bool servo_toggle_btn = (msg->buttons[RIGHT_STICK_CLICK] != 0);
+    if (servo_toggle_btn && !last_servo_toggle_button_) {
+        toggleServo();
+    }
+    last_servo_toggle_button_ = servo_toggle_btn;
+
+    // Servo가 정지 상태면 명령 전송 차단
+    if (!servo_running_) {
+        return;
+    }
+
+    // 3. [변경] 솔레노이드 제어 (HOME 버튼)
     bool home_btn = (msg->buttons[HOME] != 0);
     if (home_btn && !last_home_button_) {
-        gripper_mode_ = !gripper_mode_;
-        RCLCPP_INFO(this->get_logger(), "Gripper Mode: %s", gripper_mode_ ? "ON" : "OFF");
+        sendSolenoid();
+        RCLCPP_INFO(this->get_logger(), "Solenoid Triggered!");
     }
     last_home_button_ = home_btn;
 
-    if (gripper_mode_) {
-        processGripperJoy(msg);
-        return; // 그리퍼 모드일 때는 팔 움직임 차단
-    }
+    // 4. [추가] 그리퍼 제어 (LEFT_STICK_Y)
+    processGripperJoy(msg);
 
-    // 3. 속도 레벨 순환 (LEFT_STICK_CLICK)
+    // 5. 속도 레벨 순환 (LEFT_STICK_CLICK)
     bool speed_btn = (msg->buttons[LEFT_STICK_CLICK] != 0);
     if (speed_btn && !last_speed_button_) {
         speed_level_index_ = (speed_level_index_ + 1) % SPEED_PRESETS.size();
@@ -162,13 +179,13 @@ private:
     }
     last_speed_button_ = speed_btn;
 
-    // 4. 프레임 변경 (CHANGE_VIEW)
+    // 6. 프레임 변경 (CHANGE_VIEW)
     if (msg->buttons[CHANGE_VIEW]) {
         if (frame_to_publish_ == EEF_FRAME_ID) frame_to_publish_ = BASE_FRAME_ID;
         else frame_to_publish_ = EEF_FRAME_ID;
     }
 
-    // 5. 명령 변환 및 발행
+    // 6. 명령 변환 및 발행
     auto twist_msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
     auto joint_msg = std::make_unique<control_msgs::msg::JointJog>();
 
@@ -183,6 +200,57 @@ private:
         joint_msg->header.frame_id = BASE_FRAME_ID;
         joint_pub_->publish(std::move(joint_msg));
     }
+  }
+
+  // [수정] Servo Start/Stop 토글 함수 (논블로킹)
+  void toggleServo() {
+      if (servo_running_) {
+          // Servo 정지
+          if (!servo_stop_client_->service_is_ready()) {
+              RCLCPP_WARN(this->get_logger(), "Servo stop service not available");
+              return;
+          }
+          
+          auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+          servo_stop_client_->async_send_request(request,
+              [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
+                  try {
+                      auto response = future.get();
+                      if (response->success) {
+                          servo_running_ = false;
+                          RCLCPP_WARN(this->get_logger(), "=== SERVO STOPPED ===");
+                      } else {
+                          RCLCPP_ERROR(this->get_logger(), "Servo stop failed: %s", 
+                                       response->message.c_str());
+                      }
+                  } catch (const std::exception& e) {
+                      RCLCPP_ERROR(this->get_logger(), "Servo stop service call failed: %s", e.what());
+                  }
+              });
+      } else {
+          // Servo 시작
+          if (!servo_start_client_->service_is_ready()) {
+              RCLCPP_WARN(this->get_logger(), "Servo start service not available");
+              return;
+          }
+          
+          auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+          servo_start_client_->async_send_request(request,
+              [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
+                  try {
+                      auto response = future.get();
+                      if (response->success) {
+                          servo_running_ = true;
+                          RCLCPP_INFO(this->get_logger(), "=== SERVO STARTED ===");
+                      } else {
+                          RCLCPP_ERROR(this->get_logger(), "Servo start failed: %s", 
+                                       response->message.c_str());
+                      }
+                  } catch (const std::exception& e) {
+                      RCLCPP_ERROR(this->get_logger(), "Servo start service call failed: %s", e.what());
+                  }
+              });
+      }
   }
 
   void updateScales() {
@@ -257,29 +325,29 @@ private:
 
       return true; // Twist 모드
   }
-  int last_sent_gripper_val_ = -1; // 초기값 -1
-  // --- 그리퍼/시리얼 관련 함수 (기존 코드 유지) ---
+  
+  // [변경] 그리퍼 제어 함수 (항상 작동, LEFT_STICK_Y 사용)
   void processGripperJoy(const sensor_msgs::msg::Joy::ConstSharedPtr& msg) {
       if (serial_fd_ < 0) return;
-      double axis = msg->axes[RIGHT_STICK_Y];
+      
+      // LEFT_STICK_Y 축 사용 (인덱스 1)
+      double axis = msg->axes[LEFT_STICK_Y];
       if (axis < -1.0) axis = -1.0;
       if (axis >  1.0) axis =  1.0;
-      const double max_speed = 0.05;
+      
+      // [변경] 증분 속도를 1/3로 감소 (0.05 -> 0.0167)
+      const double max_speed = 0.0167;
       gripper_norm_ += axis * max_speed;
       if (gripper_norm_ < 0.0) gripper_norm_ = 0.0;
       if (gripper_norm_ > 1.0) gripper_norm_ = 1.0;
       
       int current_val = static_cast<int>(gripper_norm_ * 1000.0 + 0.5);
     
-    // 너무 자주 보내지 않게 + 값이 바뀌었을 때만 전송
-     if (current_val != last_sent_gripper_val_) {
-        sendGripperPosition(gripper_norm_);
-        last_sent_gripper_val_ = current_val;
-        RCLCPP_INFO(this->get_logger(), "Sent G: %d", current_val); 
-    }
-      bool solenoid_btn = (msg->buttons[RIGHT_BUMPER] != 0);
-      if (solenoid_btn && !last_solenoid_button_) sendSolenoid();
-      last_solenoid_button_ = solenoid_btn;
+      // 값이 바뀌었을 때만 전송
+      if (current_val != last_sent_gripper_val_) {
+          sendGripperPosition(gripper_norm_);
+          last_sent_gripper_val_ = current_val;
+      }
   }
 
   void sendGripperPosition(double normalized) {
@@ -299,7 +367,6 @@ private:
   void initSerial(const std::string& port_name) {
       serial_fd_ = open(port_name.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
       if (serial_fd_ < 0) {
-        // [추가] 연결 실패 시 에러 로그 띄우기
         RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", port_name.c_str());
         return; 
     }
@@ -319,6 +386,10 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<control_msgs::msg::JointJog>::SharedPtr joint_pub_;
   
+  // [추가] Servo 제어 서비스 클라이언트
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_start_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_stop_client_;
+  
   std::string frame_to_publish_;
   size_t speed_level_index_;
   
@@ -330,13 +401,14 @@ private:
   double current_scale_xz_;   // Twist X, Z
   
   bool e_stop_active_;
+  bool servo_running_;  // [추가] Servo 실행 상태
   bool last_menu_button_;
   bool last_speed_button_;
   bool last_home_button_;
-  bool last_solenoid_button_;
-  bool gripper_mode_;
+  bool last_servo_toggle_button_;  // [추가] Servo 토글 버튼 상태
   double gripper_norm_;
   int serial_fd_;
+  int last_sent_gripper_val_;
 };
 
 } // namespace zero_servo

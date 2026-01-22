@@ -45,7 +45,7 @@ class RMDControlNode(Node):
         self.COMM_TIMEOUT_SEC = 0.5
         
         # 1. 설정 변수
-        self.joint_names = ['Joint1', 'Joint2', 'Joint3', 'Joint4', 'Joint5', 'Joint7']
+        self.joint_names = ['Joint1', 'Joint2', 'Joint3', 'Joint4', 'Joint5']
         self.motor_ids = [1, 2, 3, 4, 5]
         self.num_joints = 5
         self.control_Hz = 150.0  # 제어 주기
@@ -54,7 +54,7 @@ class RMDControlNode(Node):
         self.vel_limits = [0.1, 1.0, 1.0, 1.0, 2.0]  # [m/s, rad/s, rad/s, rad/s, rad/s]
 
         # [수정] LPF 설정 (알파값 사용: 0.2 = 강한 필터링)
-        self.lpf = LowPassFilter(alpha=0.2, num_joints=self.num_joints)
+        self.lpf = LowPassFilter(alpha=0.35, num_joints=self.num_joints)
 
         #0.03m/s = 180 rpm
         self.j1_max_rpm = 180.0
@@ -304,10 +304,8 @@ class RMDControlNode(Node):
                     msg = JointState()
                     msg.header.stamp = self.get_clock().now().to_msg()
                     msg.name = self.joint_names
-                    msg.position = self.current_joint_pos + [0.0]
+                    msg.position = self.current_joint_pos 
                     self.pub_joint_state.publish(msg) # 강제 발행
-                    
-                    self.pub_joint_state.publish(msg)
                     
                 except Exception as e:
                     self.get_logger().error(f"Pub loop error: {e}")

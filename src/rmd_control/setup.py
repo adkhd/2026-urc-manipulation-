@@ -5,7 +5,7 @@ package_name = 'rmd_control'
 setup(
     name=package_name,
     version='0.0.1',
-    packages=[package_name],  # <-- 여기가 find_packages() 또는 [package_name] 이어야 함
+    packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
@@ -19,8 +19,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'rmd_node = rmd_control.rmd_node:main', # <-- 실행 진입점
-            'rmd_node_vel = rmd_control.rmd_node_vel:main', # <-- 실행 진입점
+            'rmd_node = rmd_control.rmd_node:main',
+            'rmd_node_vel = rmd_control.rmd_node_vel:main',
+            'execute = rmd_control.execute:main',  # ✅ 추가
         ],
     },
 )

@@ -1,5 +1,5 @@
 import os
-from glob import glob  # [추가 1] glob 모듈 임포트
+from glob import glob
 from setuptools import find_packages, setup
 
 package_name = 'typing_control'
@@ -13,7 +13,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         
-        # [추가 2] launch 폴더 안의 모든 .launch.py 파일을 install/share/.../launch로 복사
+        # launch 폴더 복사
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools'],
@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'planning = typing_control.planning:main',
+            'plan_execute = typing_control.plan_execute:main',  # ✅ 추가
         ],
     },
 )

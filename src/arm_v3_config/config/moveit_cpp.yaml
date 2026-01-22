@@ -60,9 +60,6 @@ arm:
   
   default_planner_config: RRTConnectkConfigDefault
   
-  # Projection evaluator (주석 처리 - 에러 방지)
-  # projection_evaluator: joints(Joint1,Joint2)
-  
   longest_valid_segment_fraction: 0.01
   enforce_constrained_state_space: false
 
