@@ -1,155 +1,20 @@
-# ============================================================
-# Complete OMPL Configuration (모든 파라미터 설정)
-# ============================================================
-
-planning_plugin: ompl_interface/OMPLPlanner
-
-# Request Adapters
-request_adapters: >-
-  default_planner_request_adapters/AddTimeOptimalParameterization
-  default_planner_request_adapters/ResolveConstraintFrames
-  default_planner_request_adapters/FixWorkspaceBounds
-  default_planner_request_adapters/FixStartStateBounds
-  default_planner_request_adapters/FixStartStateCollision
-  default_planner_request_adapters/FixStartStatePathConstraints
-
-planning_pipelines:
-  - ompl
-
-# ============================================================
-# OMPL Pipeline 설정
-# ============================================================
 ompl:
-  planning_plugin: ompl_interface/OMPLPlanner
-  
-  # ------------------------------------------------------------
-  # Time Optimal Parameterization (궤적 시간 최적화)
-  # ------------------------------------------------------------
-  path_tolerance: 0.1             # 경로 허용 오차 (m)
-  resample_dt: 0.1                # 리샘플링 시간 간격 (s)
-  min_angle_change: 0.001         # 최소 각도 변화 (rad)
-  
-  # ------------------------------------------------------------
-  # Workspace Bounds (작업 공간 경계)
-  # ------------------------------------------------------------
-  default_workspace_bounds: 10.0  # 작업 공간 크기 (m)
-  
-  # ------------------------------------------------------------
-  # Start State Validation (시작 상태 검증)
-  # ------------------------------------------------------------
-  start_state_max_bounds_error: 0.1   # 시작 상태 경계 오차 허용 (rad/m)
-  start_state_max_dt: 0.5             # 시작 상태 시간 간격 (s)
-  
-  # ------------------------------------------------------------
-  # Collision Avoidance (충돌 회피)
-  # ------------------------------------------------------------
-  jiggle_fraction: 0.05           # 충돌 시 움직임 비율 (0~1)
-  max_sampling_attempts: 200      # 최대 샘플링 시도 횟수
-
-# ============================================================
-# 그룹별 설정 (arm)
-# ============================================================
-arm:
-  # 사용 가능한 플래너 목록
   planner_configs:
-    - RRTConnectkConfigDefault
-    - RRTstarkConfigDefault
-    - PRMstarkConfigDefault
-    - ESTkConfigDefault
-  
-  # 기본 플래너
-  default_planner_config: RRTConnectkConfigDefault
-  
-  # Projection Evaluator (주석 처리 - 에러 방지)
-  # projection_evaluator: joints(joint1,joint2)
-  
-  # 유효 세그먼트 비율
-  longest_valid_segment_fraction: 0.01
-  
-  # Constrained planning
-  enforce_constrained_state_space: false
+    RRTConnectkConfigDefault:
+      type: geometric::RRTConnect
+      range: 0.0
 
-# ============================================================
-# Planner별 세부 설정
-# ============================================================
-planner_configs:
-  
-  # RRTConnect (빠르고 안정적) ⭐ 추천
-  RRTConnectkConfigDefault:
-    type: geometric::RRTConnect
-    range: 0.0  # 0 = 자동 계산
-  
-  # RRT* (최적 경로)
-  RRTstarkConfigDefault:
-    type: geometric::RRTstar
-    range: 0.0
-    goal_bias: 0.05
-    delay_collision_checking: 1
-    rewire_factor: 1.1
-  
-  # PRM* (복잡한 환경)
-  PRMstarkConfigDefault:
-    type: geometric::PRMstar
-    max_nearest_neighbors: 10
-  
-  # EST (좁은 통로)
-  ESTkConfigDefault:
-    type: geometric::EST
-    range: 0.0
-    goal_bias: 0.05
+    RRTstarkConfigDefault:
+      type: geometric::RRTstar
+      range: 0.0
+      goal_bias: 0.05
+      delay_collision_checking: 1
 
-# ============================================================
-# 🔥 추가 최적화 설정 (선택사항)
-# ============================================================
-
-# 성공률을 높이려면 이렇게 수정:
-# arm:
-#   planner_configs:
-#     - RRTConnectkConfigDefault
-#   longest_valid_segment_fraction: 0.02  # 0.01 → 0.02 (더 빠름)
-#
-# ompl:
-#   start_state_max_bounds_error: 0.2     # 0.1 → 0.2 (더 관대)
-#   jiggle_fraction: 0.1                  # 0.05 → 0.1 (더 적극적)
-#   max_sampling_attempts: 500            # 200 → 500 (더 많이 시도)
-#   path_tolerance: 0.2                   # 0.1 → 0.2 (더 관대)
-
-# ============================================================
-# 설명
-# ============================================================
-# 
-# path_tolerance: 
-#   - 궤적이 원래 경로에서 얼마나 벗어나도 되는지
-#   - 작을수록 정밀, 클수록 성공률↑
-#
-# resample_dt:
-#   - 궤적을 재샘플링하는 시간 간격
-#   - 작을수록 부드러움
-#
-# min_angle_change:
-#   - 궤적 포인트 사이 최소 각도 변화
-#   - 작을수록 세밀
-#
-# default_workspace_bounds:
-#   - 로봇 작업 공간의 크기
-#   - 충분히 크게 설정
-#
-# start_state_max_bounds_error:
-#   - 시작 자세가 joint limit에서 벗어난 정도 허용
-#   - 클수록 관대
-#
-# start_state_max_dt:
-#   - 시작 상태 조정 시간
-#
-# jiggle_fraction:
-#   - 충돌 시 로봇을 얼마나 움직여서 벗어나려 하는지
-#   - 클수록 적극적
-#
-# max_sampling_attempts:
-#   - 유효한 상태를 찾기 위한 최대 시도 횟수
-#   - 클수록 성공률↑, 느림
-#
-# longest_valid_segment_fraction:
-#   - 경로 검증 시 세그먼트 길이
-#   - 작을수록 정밀, 느림
-# ============================================================
+  arm:
+    planner_configs:
+      - RRTConnectkConfigDefault
+      - RRTstarkConfigDefault
+    default_planner_config: RRTConnectkConfigDefault
+    longest_valid_segment_fraction: 0.01
+    enforce_constrained_state_space: false
+    projection_evaluator: joints(Joint1,Joint2)

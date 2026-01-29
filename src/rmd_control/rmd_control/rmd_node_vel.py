@@ -388,7 +388,7 @@ class RMDControlNode(Node):
         limits_rad = [
             [-0.005, 0.255], # J1 m단위
             [-0.3, 3.241],   # J2 (약 -28 ~ 180도) 계산해보기
-            [-2.4564, -0.815],    # J3 (-137 ~ 22도)(수정 필요) 계산해보기
+            [-2.7564, -0.815],    # J3 (-137 ~ 22도)(수정 필요) 계산해보기
             [-2.25, 2.25],   # J4 -130~ 130
             [-100, 100]  # J5
         ]
@@ -437,12 +437,11 @@ class RMDControlNode(Node):
                 try:
                     fine_angles = self.cal_fine_motor_angles()
                     curr_fk = self.calc_all_fk(fine_angles)
-                    gripper = 0.0
                     
                     msg = JointState()
                     msg.header.stamp = self.get_clock().now().to_msg()
                     msg.name = self.joint_names
-                    msg.position = curr_fk + [gripper]
+                    msg.position = curr_fk
                     self.pub_joint_state.publish(msg) # 강제 발행
                 except Exception:
                     pass

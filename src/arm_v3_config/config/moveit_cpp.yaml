@@ -1,5 +1,5 @@
 # ============================================================
-# MoveIt CPP Configuration (Complete)
+# MoveIt CPP Configuration
 # ============================================================
 
 planning_scene_monitor_options:
@@ -11,20 +11,15 @@ planning_scene_monitor_options:
   monitored_planning_scene_topic: "/monitored_planning_scene"
   wait_for_initial_state_timeout: 10.0
 
-# ============================================================
-# Planning Pipelines
-# ============================================================
 planning_pipelines:
   pipeline_names: ["ompl"]
 
 # ============================================================
-# OMPL Planning Pipeline Configuration
+# OMPL Planning Pipeline - 모든 설정을 ompl 아래로!
 # ============================================================
 ompl:
-  # Planning plugin
   planning_plugin: ompl_interface/OMPLPlanner
   
-  # 🔥 Request Adapters (순서 중요!)
   request_adapters: >-
     default_planner_request_adapters/AddTimeOptimalParameterization
     default_planner_request_adapters/ResolveConstraintFrames
@@ -33,55 +28,63 @@ ompl:
     default_planner_request_adapters/FixStartStateCollision
     default_planner_request_adapters/FixStartStatePathConstraints
   
-  # Time Optimal Parameterization Settings
+  # Request Adapter 파라미터들
   path_tolerance: 0.1
   resample_dt: 0.1
   min_angle_change: 0.001
-  
-  # Workspace Bounds
   default_workspace_bounds: 10.0
-  
-  # Start State Validation
   start_state_max_bounds_error: 0.1
   start_state_max_dt: 0.5
-  
-  # Collision Avoidance
   jiggle_fraction: 0.05
   max_sampling_attempts: 200
 
-# ============================================================
-# Planning Group Configuration (arm)
-# ============================================================
-arm:
-  # Planner configurations
+  # 🔥 Planner 설정 - ompl 아래에!
   planner_configs:
-    - RRTConnectkConfigDefault
-    - RRTstarkConfigDefault
-  
-  default_planner_config: RRTConnectkConfigDefault
-  
-  longest_valid_segment_fraction: 0.01
-  enforce_constrained_state_space: false
+    RRTConnect:
+      type: geometric::RRTConnect
+      range: 0.3              # 🔥 확장 거리 (0.0 = 자동)
+    
+    RRTstar:
+      type: geometric::RRTstar
+      range: 0.3
+      goal_bias: 0.1          # 🔥 목표 지향 확률 (0~1)
+      delay_collision_checking: 1
+    
+    RRT:
+      type: geometric::RRT
+      range: 0.3
+      goal_bias: 0.05
+    
+    LBKPIECE:
+      type: geometric::LBKPIECE
+      range: 0.3
+      border_fraction: 0.9    # 🔥 경계 탐색 비율
+      min_valid_path_fraction: 0.5
+    
+    EST:
+      type: geometric::EST
+      range: 0.3
+      goal_bias: 0.05
+
+  # 🔥 Planning Group 설정 - ompl 아래에!
+  arm:
+    planner_configs:
+      - RRTConnectkConfigDefault
+      - RRTstar
+      - RRT
+      - LBKPIECE
+      - EST
+    
+    default_planner_config: RRTConnectkConfigDefault
+    longest_valid_segment_fraction: 0.005  # 🔥 경로 보간 밀도 (작을수록 정밀)
+    enforce_constrained_state_space: false
+    projection_evaluator: joints(Joint1,Joint2)
 
 # ============================================================
-# Planner Configurations
-# ============================================================
-planner_configs:
-  RRTConnectkConfigDefault:
-    type: geometric::RRTConnect
-    range: 0.0
-  
-  RRTstarkConfigDefault:
-    type: geometric::RRTstar
-    range: 0.0
-    goal_bias: 0.05
-    delay_collision_checking: 1
-
-# ============================================================
-# Plan Request Parameters
+# Plan Request Default Parameters
 # ============================================================
 plan_request_params:
   planning_attempts: 1
-  planning_time: 5.0  # 1.0 → 5.0 (더 넉넉하게)
-  max_velocity_scaling_factor: 0.5  # 0.1 → 0.5 (더 빠르게)
-  max_acceleration_scaling_factor: 0.5  # 0.1 → 0.5
+  planning_time: 5.0
+  max_velocity_scaling_factor: 0.5
+  max_acceleration_scaling_factor: 0.5

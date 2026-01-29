@@ -113,7 +113,7 @@ class CompletePlanner(Node):
                 
                 params = PlanRequestParameters(self.moveit)
                 params.planning_pipeline = "ompl"
-                params.planner_id = "RRTConnect"
+                #params.planner_id = "RRTConnect"
                 params.planning_time = 5.0
                 params.max_velocity_scaling_factor = 0.5
                 params.max_acceleration_scaling_factor = 0.5

@@ -56,6 +56,7 @@ def generate_launch_description():
         parameters=[
             moveit_config.robot_description,
             moveit_config.robot_description_semantic,
+            moveit_config.robot_description_kinematics
         ],
     )
 
@@ -90,7 +91,13 @@ def generate_launch_description():
         executable="spawner",
         arguments=["zero_arm_controller", "-c", "/controller_manager"],
     )
-    
+    rmd_control_node = Node(
+        package="rmd_control",  
+        executable="rmd_node_vel", 
+        name="rmd_control_node_vel",
+        output="screen",
+        emulate_tty=True,  # 로그 출력 개선
+    )
     # Launch as much as possible in components
     container = ComposableNodeContainer(
         name="moveit_servo_demo_container",
@@ -120,7 +127,7 @@ def generate_launch_description():
                 package="tf2_ros",
                 plugin="tf2_ros::StaticTransformBroadcasterNode",
                 name="static_tf2_broadcaster",
-                parameters=[{"child_frame_id": "/base_link", "frame_id": "/world"}],
+                parameters=[{"child_frame_id": "/link0", "frame_id": "/world"}],
             ),
             
             ComposableNode(#작성 필요=>코드 따옴., 아마 플러그인 관련된 packagexml cmakelist 수정 필요
@@ -169,6 +176,7 @@ def generate_launch_description():
             rviz_node,
             servo_node,
             container,
+            rmd_control_node,
             #ros2_control_node,
             #joint_state_broadcaster_spawner,
             #panda_arm_controller_spawner,

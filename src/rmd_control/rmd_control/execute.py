@@ -39,7 +39,7 @@ class TrajectoryExecutor(Node):
         
         # PID 게인 (관절별 위치 오차 보정용)
         # [J1, J2, J3, J4, J5]
-        self.position_kp = [50.0, 1.5, 1.5, 1.0, 0.8]  # P gain
+        self.position_kp = [5.0, 1.5, 1.5, 1.0, 0.8]  # P gain
         self.position_ki = [0.0, 0.0, 0.0, 0.0, 0.0]   # I gain (optional)
         self.position_kd = [0.0, 0.0, 0.0, 0.0, 0.0]   # D gain (optional)
         
