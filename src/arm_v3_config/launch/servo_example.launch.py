@@ -142,7 +142,7 @@ def generate_launch_description():
                 parameters=[{
                 "deadzone": 0.12,        # <- 여기서 데드존 줌 (축 최대값의 5%)
                 "autorepeat_rate": 150.,  # 필요 없으면 0
-                # "dev": "/dev/input/js0",  # 디바이스도 명시하고 싶으면
+                "dev": "/dev/input/arm_joy",  # 디바이스도 명시하고 싶으면
             }],
             ),
         ],
